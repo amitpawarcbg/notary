@@ -89,9 +89,26 @@ We can see Notary client installation in later section.
 
 ---
 
-# Steps to encforce container image trust using Docker:
+# Notary installation and steps to encforce container image trust using Docker:
 
-1. Make sure you have docker and docker-compose installed on your system
+1. Make sure you have docker and docker-compose installed on your system.
+ 
+   docker-compose can be installed on ubuntu using command "apt install docker-compose".
+ 
+2. Clone the Git repository.
+ 
+ $ "git clone https://github.com/theupdateframework/notary"
+
+3. The following command will build the Notary images
+ 
+ $ "cd notary; docker-compose build"
+ 
+4. Run docker-compose, Notary server will be running on "localhost:4443"
+ 
+ $ "docker-compose up -d"
+ 
+ 
+
 
 
 
