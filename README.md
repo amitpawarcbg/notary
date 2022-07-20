@@ -108,6 +108,91 @@ We can see Notary client installation in later section.
  $ "docker-compose up -d"
  
  
+ ![image](https://user-images.githubusercontent.com/88305831/179926663-38a0b745-9f16-4064-b081-d2671a411a7f.png)
+ 
+ $ "docker ps | grep -i notary"
+ 
+ ![image](https://user-images.githubusercontent.com/88305831/179927327-65cfda9b-8c2a-4836-a60b-289830309b1f.png)
+
+
+ 5. Copy the config file and testing certs to your local Notary config directory. The config file has information about the notary server URL and the CA certificate.
+ 
+ $ "$ mkdir -p ~/.notary && cp cmd/notary/config.json cmd/notary/root-ca.crt ~/.notary"
+ 
+ In development setup, Notary server uses self-signed certificates, this root-ca.crt is required to successfully connect to it from the client i.e. docker and notary CLI.
+ 
+ 6. Run a docker-registry locally, the registry server will be running on localhost:5000
+ 
+ $ "docker run -d -p 5000:5000 --restart=always --name registry registry:2"
+ 
+ ![image](https://user-images.githubusercontent.com/88305831/179927609-e34ea9f7-721e-4aee-bbec-903285bde76d.png)
+
+ $ " docker ps | grep registry"
+ 
+ ![image](https://user-images.githubusercontent.com/88305831/179927795-a7ffe580-886e-4916-816d-1e82aa1c3b1c.png)
+
+ 7. Pull an image from docker.io
+ 
+ $ "docker pull nginx:latest"
+ 
+ $ "docker image list"
+ 
+ ![image](https://user-images.githubusercontent.com/88305831/179928476-92b89ca1-37ff-48cc-803d-294efcc30ad6.png)
+ 
+ 8. Tag the image so that we can push it to the local docker registry
+ 
+ $ "docker tag nginx:latest localhost:5000/nginx:latest"
+ 
+ $ "docker image list"
+ 
+![image](https://user-images.githubusercontent.com/88305831/179928938-432e91d6-324d-4adb-9c40-6afad909383d.png)
+ 
+ 9. Add these variables to enable Docker content trust, these are read by docker CLI.
+ 
+ $ "export DOCKER_CONTENT_TRUST_SERVER=https://localhost:4443"
+ 
+ $ "export DOCKER_CONTENT_TRUST=1"
+ 
+ $ "env | grep -i docker"
+ 
+ ![image](https://user-images.githubusercontent.com/88305831/179929456-f1a02365-edc6-413b-89cf-f5808d0d1f5e.png)
+
+ 10. Login to local Docker registry with username and password as admin:admin
+ 
+ $ "docker login localhost:5000"
+ 
+ ![image](https://user-images.githubusercontent.com/88305831/179930079-b94f9d97-d5db-4754-b5c7-3ecde3d92cf6.png)
+
+ 11. When you push the image to the local Docker registry, it will ask you for a passphrase for root key and repository key. You will be prompted to enter these passwords automatically. When we push the image to the private registry it is signed by the Notary server
+ 
+ $ "docker push localhost:5000/nginx:latest"
+ 
+ ![image](https://user-images.githubusercontent.com/88305831/179930611-03d6c861-f22e-44fd-b04c-fc8339985328.png)
+
+ The root and the repository (targets) keys are created once, and stored locally on the client machine which pushes the first image to the repository. The passphrases you entered above will be required when you want to push a new tag to the image "localhost:5000/nginx"
+ 
+ You can read more about different types of the keys involved in content trust and their management [here](https://docs.docker.com/engine/security/trust/trust_key_mng/).
+ 
+ 
+ 12. Install notary cli
+
+ $ "sudo apt install notary"
+ 
+ 13. You can verify whether the image pushed to the local registry is signed by the Notary server with this command
+ 
+ $ "notary -s https://localhost:4443 -d ~/.docker/trust list localhost:5000/nginx"
+ 
+ ![image](https://user-images.githubusercontent.com/88305831/179931675-041cf8b6-33e8-46b2-a5e3-91512d4c54a3.png)
+ 
+ The -s flag indicates the location of the Notary server. The directory specified by -d flag has all the keys which were generated in previous steps along with the cache of already downloaded trust metadata.
+ 
+ 14. Let’s try to download any other image which has not been signed by notary
+ 
+ $ "docker pull alpine:latest"
+ ![image](https://user-images.githubusercontent.com/88305831/179932087-32f7ed3d-5c7f-4c29-85ae-45367f0eeab9.png)
+
+ 
+
 
 
 
